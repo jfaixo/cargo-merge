@@ -16,7 +16,7 @@ const SIMPLE_CRATE_LIB_RS : &str = "src/lib.rs";
 const SIMPLE_CRATE_MAIN : &str = "src/main";
 const SIMPLE_CRATE_LIB : &str = "src/lib";
 const MERGE_OUTPUT_PATH: &str = "target/merge/";
-const MERGED_OUTPUT_FILE_NAME: &str = "merged";
+const MERGED_OUTPUT_FILE_NAME: &str = "merged.rs";
 
 const REGEX_COMMENT : &str = r"^\s*//";
 const REGEX_MOD : &str = r"^\s*(pub\s+)?mod\s+(.*)\s*;\s*$";
