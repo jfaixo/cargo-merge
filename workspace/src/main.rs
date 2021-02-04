@@ -28,14 +28,10 @@
 //! |-|-|-|
 //! | `-s` | `--silence-standard-error-output` | Remove all the usages of `eprint!` and `eprintln!` macros from your code. |
 //!
-#[doc(hidden)]
-mod opts;
-#[doc(hidden)]
-mod merge;
 
 use structopt::StructOpt;
-use crate::opts::Opts;
-use crate::merge::Merge;
+use cargo_merge::opts::Opts;
+use cargo_merge::merge::Merge;
 use log::LevelFilter;
 
 #[doc(hidden)]

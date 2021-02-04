@@ -6,6 +6,13 @@ The initial purpose of this command is to merge your whole crate as a single sou
 
 It works by expanding module imports by detecting them with regex, rewriting some "use" statements in the process.
 
+## Features
+- merge the library crate of the package
+- merge modules from the main binary crate of the package
+- merge external crates
+  - path based crates (crates that are declared as dependencies like this : `my-crate = { path = "path/to/crate" }` )
+- silence the standard error output by cleansing source code from `eprint!` and `eprintln!` macros
+
 ## Install
 Just run the following command:
 ```bash

@@ -77,7 +77,7 @@ impl Merge {
         }
         // Simple bin crate case
         if Path::new(SIMPLE_CRATE_MAIN_RS).exists() {
-            writeln!(output_string, "{}", self.inject_crate(PathBuf::from(SIMPLE_CRATE_MAIN), cargo_data.package_name.as_str(), &cargo_data).as_str()).unwrap();
+            writeln!(output_string, "{}", self.inject_crate(PathBuf::from(SIMPLE_CRATE_MAIN), "", &cargo_data).as_str()).unwrap();
         }
 
         // Ensure that the folders are created
@@ -140,13 +140,7 @@ impl Merge {
                             // If the line is a use declaration, rewrite it
                             let module_name = module_name.get(1).unwrap().as_str().trim();
                             debug!("found use declaration: {}", module_name);
-                            let modified_module_name = if is_root_module {
-                                module_name.replace(full_module_name, format!("{}::{}", full_module_name, current_module_name).as_str())
-                            }
-                            else {
-                                module_name.to_string()
-                            };
-                            let mut modified_module_name = modified_module_name.replace("crate", full_module_name);
+                            let mut modified_module_name = module_name.replace("crate", full_module_name);
 
                             // Handle the use declaration of external dependencies declared in Cargo.toml
                             for dependency in &cargo_data.external_crates {
@@ -205,7 +199,7 @@ impl Merge {
 
 
 /// Try to find the package root by detecting the Cargo.toml file
-fn detect_package_root() -> PathBuf {
+pub fn detect_package_root() -> PathBuf {
     let mut current_folder = std::env::current_dir().unwrap();
     loop {
         // If we found the package root, return it
