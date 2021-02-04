@@ -9,6 +9,7 @@ use regex::Regex;
 use std::fs::File;
 use std::fmt::Write;
 use colored::Colorize;
+use std::collections::HashMap;
 
 const CARGO_TOML : &str = "Cargo.toml";
 const SIMPLE_CRATE_MAIN_RS : &str = "src/main.rs";
@@ -31,6 +32,11 @@ pub struct Merge {
     opts: Opts,
 }
 
+struct CargoData {
+    package_name: String,
+    external_crates: HashMap<String, PathBuf>
+}
+
 impl Merge {
     pub fn new(opts: Opts) -> Merge {
         Merge {
@@ -48,20 +54,30 @@ impl Merge {
         let package_root_path = detect_package_root();
 
         // Read into the Cargo.toml the package name, which is also the default crate name
-        let package_name = get_package_name(&package_root_path);
+        let cargo_data = load_cargo_toml(&package_root_path);
 
-        println!("     {} crate {} ({})", "Merging".green().bold(), package_name, package_root_path.to_str().unwrap());
+        println!("     {} crate {} ({})", "Merging".green().bold(), cargo_data.package_name, package_root_path.to_str().unwrap());
 
         // Holds the single file output built
         let mut output_string = String::new();
 
+        // Merge all the identified dependency crates
+        for dependency in &cargo_data.external_crates {
+            let curated_dependency_name = dependency.0.replace("-", "_");
+            writeln!(output_string, "pub mod {} {{", curated_dependency_name).unwrap();
+            writeln!(output_string, "{}", self.inject_crate(dependency.1.clone(), curated_dependency_name.as_str(), &cargo_data).as_str()).unwrap();
+            writeln!(output_string, "}}").unwrap();
+        }
+
         // If there is a lib crate in this package, process it
         if Path::new(SIMPLE_CRATE_LIB_RS).exists() {
-            writeln!(output_string, "{}", self.inject_crate(PathBuf::from(SIMPLE_CRATE_LIB), package_name.as_str()).as_str()).unwrap();
+            writeln!(output_string, "pub mod {} {{", cargo_data.package_name).unwrap();
+            writeln!(output_string, "{}", self.inject_crate(PathBuf::from(SIMPLE_CRATE_LIB), cargo_data.package_name.as_str(), &cargo_data).as_str()).unwrap();
+            writeln!(output_string, "}}").unwrap();
         }
         // Simple bin crate case
         if Path::new(SIMPLE_CRATE_MAIN_RS).exists() {
-            writeln!(output_string, "{}", self.inject_crate(PathBuf::from(SIMPLE_CRATE_MAIN), package_name.as_str()).as_str()).unwrap();
+            writeln!(output_string, "{}", self.inject_crate(PathBuf::from(SIMPLE_CRATE_MAIN), cargo_data.package_name.as_str(), &cargo_data).as_str()).unwrap();
         }
 
         // Ensure that the folders are created
@@ -73,16 +89,16 @@ impl Merge {
         fs::write(&output_file_path, output_string)
             .unwrap_or_else(|_| panic!("There was an issue while writing to file: {}", MERGE_OUTPUT_PATH));
 
-        println!("      {} crate {} into `{}` ", "Merged".green().bold(), package_name, output_file_path.to_str().unwrap());
+        println!("      {} crate {} into `{}` ", "Merged".green().bold(), cargo_data.package_name, output_file_path.to_str().unwrap());
     }
 
-    fn inject_crate(&self, crate_path: PathBuf, package_name: &str) -> String {
-        self.inject_modules(crate_path, package_name, true)
+    fn inject_crate(&self, crate_path: PathBuf, package_name: &str, cargo_data: &CargoData) -> String {
+        self.inject_modules(crate_path, package_name, "crate", true, &cargo_data)
     }
 
 
     /// Inject a module into the output file, recursively injecting nested modules
-    fn inject_modules(&self, full_module_path: PathBuf, current_module_name: &str, is_root_module: bool) -> String {
+    fn inject_modules(&self, full_module_path: PathBuf, current_module_name: &str, full_module_name: &str, is_root_module: bool, cargo_data: &CargoData) -> String {
         let mut output_string = String::new();
 
         // Find whether this module is defined with a lib.rs file, or directly by a file named as the module
@@ -119,17 +135,30 @@ impl Merge {
                             // If the line is a comment
                             writeln!(output_string, "{}", line).unwrap();
                         }
+                        // ##### use declaration rewrite
                         else if let Some(module_name) = self.use_regex.captures(&line) {
-                            // If the line is a use statement, rewrite it
+                            // If the line is a use declaration, rewrite it
                             let module_name = module_name.get(1).unwrap().as_str().trim();
+                            debug!("found use declaration: {}", module_name);
                             let modified_module_name = if is_root_module {
-                                module_name.replace(current_module_name, "crate")
+                                module_name.replace(full_module_name, format!("{}::{}", full_module_name, current_module_name).as_str())
                             }
                             else {
                                 module_name.to_string()
                             };
+                            let mut modified_module_name = modified_module_name.replace("crate", full_module_name);
+
+                            // Handle the use declaration of external dependencies declared in Cargo.toml
+                            for dependency in &cargo_data.external_crates {
+                                if modified_module_name.starts_with(dependency.0.replace("-", "_").as_str()) {
+                                    modified_module_name = format!("crate::{}", modified_module_name);
+                                }
+                            }
+
+                            debug!("rewriting statement to: {}", modified_module_name);
                             writeln!(output_string, "use {};", modified_module_name).unwrap();
                         }
+                        // ##### mod declaration rewrite
                         else if let Some(module_name) = self.mod_regex.captures(&line) {
                             // If the line is a module import, process it
                             let module_name = module_name.get(2).unwrap().as_str().trim();
@@ -147,7 +176,7 @@ impl Merge {
                             else {
                                 Path::new(&full_module_path).join(module_name)
                             };
-                            writeln!(output_string, "{}", self.inject_modules(full_module_path, &module_name, false)).unwrap();
+                            writeln!(output_string, "{}", self.inject_modules(full_module_path, &module_name, format!("{}::{}", full_module_name, current_module_name).as_str(), false, cargo_data)).unwrap();
 
                             // Close the closure
                             writeln!(output_string, "}}").unwrap();
@@ -197,17 +226,34 @@ fn detect_package_root() -> PathBuf {
     panic!("Rust package root not found.")
 }
 
-fn get_package_name(package_root_path: &PathBuf) -> String {
+fn load_cargo_toml(package_root_path: &PathBuf) -> CargoData {
     let cargo_toml = fs::read_to_string(package_root_path.join(CARGO_TOML))
         .expect("Could not read Cargo.toml content");
 
     let cargo_toml = cargo_toml.parse::<Value>()
         .expect("Could not parse Cargo.toml content");
 
+    // Grab the package name
     let mut package_name = cargo_toml["package"]["name"].to_string();
     // Remove eventual quotes
     package_name = package_name.replace("\"", "").replace("-", "_");
-
     debug!("Package name: {}", package_name);
-    package_name
+
+    // Grab external crate that are declared with a path
+    let mut external_crates = HashMap::new();
+    for (name, description) in cargo_toml["dependencies"].as_table().unwrap() {
+        if description.is_table() {
+            let description = description.as_table().unwrap();
+            if  description.contains_key("path") {
+                let mut crate_path = PathBuf::from(description["path"].as_str().unwrap());
+                crate_path.push("src/lib");
+                external_crates.insert(name.clone(), crate_path);
+            }
+        }
+    }
+
+    CargoData {
+        package_name,
+        external_crates
+    }
 }
