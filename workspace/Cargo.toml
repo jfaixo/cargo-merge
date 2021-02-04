@@ -2,10 +2,14 @@
 name = "cargo-bundle"
 version = "0.1.0"
 authors = ["Julien Faixo <julien@faixo.me>"]
-description = "Cargo sub command to bundle the source code of a crate into a single file."
-license = "Apache-2.0"
+description = "A cargo subcommand to bundle the source code of a crate into a single file."
+license = "MIT"
 homepage = "https://gitlab.com/jfaixo/cargo-bundle"
+documentation = "https://gitlab.com/jfaixo/cargo-bundle"
 repository = "https://gitlab.com/jfaixo/cargo-bundle.git"
+readme = "../README.md"
+keywords = ["cargo", "bundle", "competitive", "codingame"]
+categories = ["development-tools::cargo-plugins", "command-line-utilities"]
 
 edition = "2018"
 
