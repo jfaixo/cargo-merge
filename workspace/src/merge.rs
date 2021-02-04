@@ -15,15 +15,15 @@ const SIMPLE_CRATE_MAIN_RS : &str = "src/main.rs";
 const SIMPLE_CRATE_LIB_RS : &str = "src/lib.rs";
 const SIMPLE_CRATE_MAIN : &str = "src/main";
 const SIMPLE_CRATE_LIB : &str = "src/lib";
-const BUNDLE_OUTPUT_PATH: &str = "target/bundle/";
-const BUNDLE_OUTPUT_FILE_NAME: &str = "bundle.rs";
+const MERGE_OUTPUT_PATH: &str = "target/merge/";
+const MERGED_OUTPUT_FILE_NAME: &str = "merged";
 
 const REGEX_COMMENT : &str = r"^\s*//";
 const REGEX_MOD : &str = r"^\s*(pub\s+)?mod\s+(.*)\s*;\s*$";
 const REGEX_USE : &str = r"^\s*use\s+(.*)\s*;\s*$";
 const REGEX_EPRINT: &str = r"^\s*eprint(ln)?!";
 
-pub struct Bundle {
+pub struct Merge {
     comment_regex: Regex,
     mod_regex: Regex,
     use_regex: Regex,
@@ -31,9 +31,9 @@ pub struct Bundle {
     opts: Opts,
 }
 
-impl Bundle {
-    pub fn new(opts: Opts) -> Bundle {
-        Bundle {
+impl Merge {
+    pub fn new(opts: Opts) -> Merge {
+        Merge {
             comment_regex: Regex::new(REGEX_COMMENT).expect("Unable to compile the comment regex"),
             mod_regex: Regex::new(REGEX_MOD).expect("Unable to compile the mod regex"),
             use_regex: Regex::new(REGEX_USE).expect("Unable to compile the use regex"),
@@ -42,7 +42,7 @@ impl Bundle {
         }
     }
 
-    /// Main bundle entrypoint
+    /// Main merge entrypoint
     pub fn run(&self) {
         // Detect the package root
         let package_root_path = detect_package_root();
@@ -50,7 +50,7 @@ impl Bundle {
         // Read into the Cargo.toml the package name, which is also the default crate name
         let package_name = get_package_name(&package_root_path);
 
-        println!("    {} crate {} ({})", "Bundling".green().bold(), package_name, package_root_path.to_str().unwrap());
+        println!("     {} crate {} ({})", "Merging".green().bold(), package_name, package_root_path.to_str().unwrap());
 
         // Holds the single file output built
         let mut output_string = String::new();
@@ -65,15 +65,15 @@ impl Bundle {
         }
 
         // Ensure that the folders are created
-        let output_path = package_root_path.join(BUNDLE_OUTPUT_PATH);
+        let output_path = package_root_path.join(MERGE_OUTPUT_PATH);
         fs::create_dir_all(&output_path).unwrap_or_else(|_| panic!("Unable to create directory: {:?}", output_path));
 
         // Write to disk
-        let output_file_path = output_path.join(BUNDLE_OUTPUT_FILE_NAME);
+        let output_file_path = output_path.join(MERGED_OUTPUT_FILE_NAME);
         fs::write(&output_file_path, output_string)
-            .unwrap_or_else(|_| panic!("There was an issue while writing to file: {}", BUNDLE_OUTPUT_PATH));
+            .unwrap_or_else(|_| panic!("There was an issue while writing to file: {}", MERGE_OUTPUT_PATH));
 
-        println!("     {} crate {} into `{}` ", "Bundled".green().bold(), package_name, output_file_path.to_str().unwrap());
+        println!("      {} crate {} into `{}` ", "Merged".green().bold(), package_name, output_file_path.to_str().unwrap());
     }
 
     fn inject_crate(&self, crate_path: PathBuf, package_name: &str) -> String {

@@ -1,14 +1,14 @@
 [package]
-name = "cargo-bundle"
+name = "cargo-merge"
 version = "0.1.0"
 authors = ["Julien Faixo <julien@faixo.me>"]
-description = "A cargo subcommand to bundle the source code of a crate into a single file."
+description = "A cargo subcommand to merge the source code of a crate into a single file."
 license = "MIT"
-homepage = "https://gitlab.com/jfaixo/cargo-bundle"
-documentation = "https://gitlab.com/jfaixo/cargo-bundle"
-repository = "https://gitlab.com/jfaixo/cargo-bundle.git"
+homepage = "https://gitlab.com/jfaixo/cargo-merge"
+documentation = "https://gitlab.com/jfaixo/cargo-merge"
+repository = "https://gitlab.com/jfaixo/cargo-merge.git"
 readme = "../README.md"
-keywords = ["cargo", "bundle", "competitive", "codingame"]
+keywords = ["cargo", "merge", "competitive", "codingame"]
 categories = ["development-tools::cargo-plugins", "command-line-utilities"]
 
 edition = "2018"

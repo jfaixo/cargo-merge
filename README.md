@@ -1,24 +1,24 @@
-# Cargo bundle
+# Cargo merge
 
-A cargo subcommand that bundles your crate source code into a single file.
+A cargo subcommand that merges your crate source code into a single file.
 
-The initial purpose of this command is to bundle your whole crate as a single source file that can be used on competitive programming platforms.
+The initial purpose of this command is to merge your whole crate as a single source file that can be used on competitive programming platforms.
 
 It works by expanding module imports by detecting them with regex, rewriting some "use" statements in the process.
 
 ## Install
 Just run the following command:
 ```bash
-cargo install cargo-bundle
+cargo install cargo-merge
 ```
 
 ## Usage
 Simply call the cargo sub command inside your crate folder hierarchy (it can be any folder below the one containing your `Cargo.toml` file):
 ```bash
-cargo bundle
+cargo merge
 ```
 
-This will generate a bundle file in `target/bundle/bundle.rs`.
+This will generate a merged file in `target/merge/merged.rs`.
 
 ## Options
 
