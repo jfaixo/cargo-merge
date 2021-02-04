@@ -53,6 +53,9 @@ impl Merge {
         // Detect the package root
         let package_root_path = detect_package_root();
 
+        // Set the package root as the current directory
+        std::env::set_current_dir(&package_root_path).unwrap();
+
         // Read into the Cargo.toml the package name, which is also the default crate name
         let cargo_data = load_cargo_toml(&package_root_path);
 
