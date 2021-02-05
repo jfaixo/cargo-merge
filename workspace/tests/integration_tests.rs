@@ -109,3 +109,22 @@ fn import_external_lib() {
 
     assert_eq!(expected, result);
 }
+
+#[test]
+fn nested_crates() {
+    unsafe { reset_base_dir(); }
+    let test_path = "tests_data/nested_crates";
+
+    // Change current directory to the test directory
+    let test_path = detect_package_root().join(test_path);
+    std::env::set_current_dir(&test_path).unwrap();
+
+    let opts = Opts { remove_error_output: false, debug: false };
+    let merge = Merge::new(opts);
+    merge.run();
+
+    let expected = fs::read_to_string(test_path.join("expected_output.rs")).unwrap();
+    let result = fs::read_to_string(test_path.join("target/merge/merged.rs")).unwrap();
+
+    assert_eq!(expected, result);
+}

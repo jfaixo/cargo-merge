@@ -53,7 +53,7 @@ impl Merge {
         // Detect the package root
         let package_root_path = detect_package_root();
 
-        // Set the package root as the current directory
+        // Set the package root as the current directory. This is required for dependencies relative paths to be valid.
         std::env::set_current_dir(&package_root_path).unwrap();
 
         // Read into the Cargo.toml the package name, which is also the default crate name
@@ -173,7 +173,13 @@ impl Merge {
                             else {
                                 Path::new(&full_module_path).join(module_name)
                             };
-                            writeln!(output_string, "{}", self.inject_modules(full_module_path, &module_name, format!("{}::{}", full_module_name, current_module_name).as_str(), false, cargo_data)).unwrap();
+
+                            let full_module_name = if is_root_module {
+                                format!("{}::{}", full_module_name, current_module_name)
+                            } else {
+                                full_module_name.to_string()
+                            };
+                            writeln!(output_string, "{}", self.inject_modules(full_module_path, &module_name, full_module_name.as_str(), false, cargo_data)).unwrap();
 
                             // Close the closure
                             writeln!(output_string, "}}").unwrap();
