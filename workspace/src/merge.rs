@@ -21,7 +21,7 @@ const MERGED_OUTPUT_FILE_NAME: &str = "merged.rs";
 
 const REGEX_COMMENT : &str = r"^\s*//";
 const REGEX_MOD : &str = r"^\s*(pub\s+)?mod\s+(.*)\s*;\s*$";
-const REGEX_USE : &str = r"^\s*use\s+(.*)\s*;\s*$";
+const REGEX_USE : &str = r"^\s*use\s+(.*)\s*$";
 const REGEX_EPRINT: &str = r"^\s*eprint(ln)?!";
 
 pub struct Merge {
@@ -153,7 +153,7 @@ impl Merge {
                             }
 
                             debug!("rewriting statement to: {}", modified_module_name);
-                            writeln!(output_string, "use {};", modified_module_name).unwrap();
+                            writeln!(output_string, "use {}", modified_module_name).unwrap();
                         }
                         // ##### mod declaration rewrite
                         else if let Some(module_name) = self.mod_regex.captures(&line) {
