@@ -16,7 +16,7 @@
 //! - silence the standard error output by cleansing source code from `eprint!` and `eprintln!` macros
 //!
 //! ## Examples
-//! Working basic examples can be found in the [integration tests data](https://gitlab.com/jfaixo/cargo-merge/-/tree/main/workspace/tests_data).
+//! Working basic examples can be found in the [integration tests data](https://github.com/jfaixo/cargo-merge/tree/main/workspace/tests_data).
 //!
 //! ## Install
 //! Just run the following command:
