@@ -175,9 +175,9 @@ impl Merge {
                             };
 
                             let full_module_name = if is_root_module {
-                                format!("{}::{}", full_module_name, current_module_name)
-                            } else {
                                 full_module_name.to_string()
+                            } else {
+                                format!("{}::{}", full_module_name, current_module_name)
                             };
                             writeln!(output_string, "{}", self.inject_modules(full_module_path, &module_name, full_module_name.as_str(), false, cargo_data)).unwrap();
 
